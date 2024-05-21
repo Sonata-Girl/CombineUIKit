@@ -13,7 +13,7 @@ class ViewController: UIViewController {
     private var dataLabel: UILabel = {
         let label = UILabel()
         label.text = "data"
-        label.font = UIFont.systemFont(ofSize: 20, weight: .black)
+        label.font = UIFont.systemFont(ofSize: 16, weight: .black)
         label.textColor = .label
         return label
     }()
@@ -21,7 +21,7 @@ class ViewController: UIViewController {
     private var statusLabel: UILabel = {
         let label = UILabel()
         label.text = "status"
-        label.font = UIFont.systemFont(ofSize: 20, weight: .black)
+        label.font = UIFont.systemFont(ofSize: 16)
         label.textColor = .label
         return label
     }()
@@ -34,13 +34,13 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        buttonCancel.frame = CGRect(x: 50, y: 100, width: 100, height: 50)
-        buttonCancel.setTitle("Cancel", for: .normal)
+        buttonCancel.frame = CGRect(x: 50, y: 100, width: 150, height: 50)
+        buttonCancel.setTitle("Отменить заказ", for: .normal)
         buttonCancel.backgroundColor = .green
         buttonCancel.addTarget(self, action: #selector(cancel), for: .touchUpInside)
        
-        buttonRefresh.frame = CGRect(x: 50, y: 200, width: 100, height: 50)
-        buttonRefresh.setTitle("Refresh", for: .normal)
+        buttonRefresh.frame = CGRect(x: 50, y: 200, width: 150, height: 50)
+        buttonRefresh.setTitle("Вызвать такси", for: .normal)
         buttonRefresh.backgroundColor = .blue
         buttonRefresh.addTarget(self, action: #selector(refresh), for: .touchUpInside)
 
@@ -80,14 +80,13 @@ final class FirstCancelPipelineViewModel: ObservableObject {
     init() {
         cancellable = $data
             .map { [unowned self] value -> String in
-                self.status = "Запрос в банк..."
+                self.status = "Ищем машину..."
                 return value ?? ""
             }
-            .delay(for: 5, scheduler: DispatchQueue.main)
+            .delay(for: 7, scheduler: DispatchQueue.main)
             .sink { [unowned self] value in
-                self.data = "Сумма всех счетов 1 млн."
-                self.status = "Данные получены."
-
+                self.data = "Водитель будет через 10 минут."
+                self.status = "Машина найдена."
             }
     }
 
@@ -96,7 +95,7 @@ final class FirstCancelPipelineViewModel: ObservableObject {
     }
 
     func cancel() {
-        status = "Операция отменена"
+        status = "Заказ отменен"
         cancellable?.cancel()
         cancellable = nil
     }
