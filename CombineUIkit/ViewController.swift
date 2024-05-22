@@ -8,96 +8,61 @@
 import UIKit
 import Combine
 
-class ViewController: UIViewController {
+final class ViewController: UIViewController {
 
-    private var dataLabel: UILabel = {
-        let label = UILabel()
-        label.text = "data"
-        label.font = UIFont.systemFont(ofSize: 20, weight: .black)
-        label.textColor = .label
-        return label
-    }()
+    var viewModel = FirstPipelineViewModel()
 
-    private var statusLabel: UILabel = {
-        let label = UILabel()
-        label.text = "status"
-        label.font = UIFont.systemFont(ofSize: 20, weight: .black)
-        label.textColor = .label
-        return label
-    }()
+    let label = UILabel()
+    let textFieldName = UITextField()
+    let textFieldSurname = UITextField()
 
-    let buttonCancel = UIButton()
-    let buttonRefresh = UIButton()
-
-    var viewModel = FirstCancelPipelineViewModel()
+    var anyCancellable: AnyCancellable?
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        label.frame = CGRect(x: 250, y: 100, width: 100, height: 50)
+        textFieldName.frame = CGRect(x: 100, y: 100, width: 100, height: 50)
+        textFieldName.placeholder = "Ваше Имя"
+        textFieldName.addTarget(self, action: #selector(textFieldValueChanged(_ :)), for: .editingChanged)
+        textFieldSurname.frame = CGRect(x: 100, y: 200, width: 100, height: 50)
+        textFieldSurname.placeholder = "Ваша Фамилия"
+        textFieldSurname.addTarget(self, action: #selector(textFieldValueChanged(_ :)), for: .editingChanged)
 
-        buttonCancel.frame = CGRect(x: 50, y: 100, width: 100, height: 50)
-        buttonCancel.setTitle("Cancel", for: .normal)
-        buttonCancel.backgroundColor = .green
-        buttonCancel.addTarget(self, action: #selector(cancel), for: .touchUpInside)
-       
-        buttonRefresh.frame = CGRect(x: 50, y: 200, width: 100, height: 50)
-        buttonRefresh.setTitle("Refresh", for: .normal)
-        buttonRefresh.backgroundColor = .blue
-        buttonRefresh.addTarget(self, action: #selector(refresh), for: .touchUpInside)
+        view.addSubview(label)
+        view.addSubview(textFieldName)
+        view.addSubview(textFieldSurname)
 
-        dataLabel.frame = CGRect(x: 50, y: 300, width: 300, height: 50)
-        statusLabel.frame = CGRect(x: 50, y: 400, width: 300, height: 50)
-
-        view.addSubview(buttonCancel)
-        view.addSubview(buttonRefresh)
-        view.addSubview(dataLabel)
-        view.addSubview(statusLabel)
-
-
-        let subscribe1 = Subscribers.Assign(object: dataLabel, keyPath: \.text)
-        viewModel.$data.subscribe(subscribe1)
-       
-        let subscribe2 = Subscribers.Assign(object: statusLabel, keyPath: \.text)
-        viewModel.$status.subscribe(subscribe2)
+        // тут мы связываем свойство валидации во вью модели с
+        // нашим вью контроллером
+        // в assign говорим чтобы результат возвращался в лейбл.text
+        anyCancellable = viewModel.$validationName
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.text, on: label)
 
     }
 
-    @objc private func cancel() {
-        viewModel.cancel()
+    @objc private func textFieldValueChanged(_ sender: UITextField) {
+        if sender == textFieldName {
+            viewModel.name = textFieldName.text ?? ""
+        } else {
+            viewModel.surname = textFieldSurname.text ?? ""
+        }
     }
 
-    @objc private func refresh() {
-        viewModel.refresh()
-    }
 }
 
-final class FirstCancelPipelineViewModel: ObservableObject {
-    @Published var data: String? = ""
-    @Published var status: String? = ""
-    @Published var validation = ""
-
-    private var cancellable: AnyCancellable?
+class FirstPipelineViewModel: ObservableObject {
+    @Published var name = ""
+    @Published var surname = ""
+    @Published var validationName: String? = ""
 
     init() {
-        cancellable = $data
-            .map { [unowned self] value -> String in
-                self.status = "Запрос в банк..."
-                return value ?? ""
-            }
-            .delay(for: 5, scheduler: DispatchQueue.main)
-            .sink { [unowned self] value in
-                self.data = "Сумма всех счетов 1 млн."
-                self.status = "Данные получены."
+        $name
+            .map { $0.isEmpty || self.surname.isEmpty ? "❌" : "✅"}
+            .assign(to: &$validationName)
 
-            }
-    }
-
-    func refresh() {
-        data = "Перезапрос данных"
-    }
-
-    func cancel() {
-        status = "Операция отменена"
-        cancellable?.cancel()
-        cancellable = nil
+        $surname
+            .map { $0.isEmpty || self.name.isEmpty ? "❌" : "✅"}
+            .assign(to: &$validationName)
     }
 }
