@@ -1,8 +1,8 @@
 //
-//  ViewController.swift
+//  FailPublisherVIew.swift
 //  CombineUIkit
 //
-//  Created by Sonata Girl on 21.05.2024.
+//  Created by Sonata Girl on 23.05.2024.
 //
 
 import UIKit
@@ -135,3 +135,4 @@ final class FailPublisher2ViewModel: ObservableObject {
             .eraseToAnyPublisher()
     }
 }
+
